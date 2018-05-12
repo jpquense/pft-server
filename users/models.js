@@ -5,6 +5,12 @@ const mongoose = require('mongoose');
 mongoose.Promise = global.Promise;
 
 const UserSchema = mongoose.Schema({
+  email: {
+    type: String,
+    lowercase: true,
+    unique: true,
+    required: true,
+},
   username: {
     type: String,
     required: true,
@@ -14,12 +20,13 @@ const UserSchema = mongoose.Schema({
     type: String,
     required: true
   },
-  firstName: {type: String, default: ''},
-  lastName: {type: String, default: ''}
+  firstName: {type: String, required: true, default: ''},
+  lastName: {type: String, required: true, default: ''}
 });
 
 UserSchema.methods.serialize = function() {
   return {
+    email: this.email || '',
     username: this.username || '',
     firstName: this.firstName || '',
     lastName: this.lastName || ''
@@ -36,4 +43,4 @@ UserSchema.statics.hashPassword = function(password) {
 
 const User = mongoose.model('User', UserSchema);
 
-module.exports = {User};
+module.exports = { User };

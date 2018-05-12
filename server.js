@@ -1,88 +1,88 @@
 'use strict';
-require('dotenv').config();
+
 const express = require('express');
 const mongoose = require('mongoose');
 const morgan = require('morgan');
+const bodyParser = require('body-parser');
+const jsonParser = bodyParser.json();
 const passport = require('passport');
-
-// Here we use destructuring assignment with renaming so the two variables
-// called router (from ./users and ./auth) have different names
-// For example:
-// const actorSurnames = { james: "Stewart", robert: "De Niro" };
-// const { james: jimmy, robert: bobby } = actorSurnames;
-// console.log(jimmy); // Stewart - the variable name is jimmy, not james
-// console.log(bobby); // De Niro - the variable name is bobby, not robert
-const { router: usersRouter } = require('./users');
-const { router: authRouter, localStrategy, jwtStrategy } = require('./auth');
-
-mongoose.Promise = global.Promise;
 
 const { PORT, DATABASE_URL } = require('./config');
 
+const { Goal } = require('./goals/models');
+const { User } = require('./users/models');
+
+const {router: usersRouter} = require('./users/router');
+const {router: goalsRouter} = require('./goals/router');
+const { router: authRouter, localStrategy, jwtStrategy } = require('./auth');
+
 const app = express();
+
+mongoose.Promise = global.Promise;
+
+// CORS
+app.use((req, res, next) => {
+  res.header('Access-Control-Allow-Origin', '*');
+  res.header('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE');
+  res.header('Access-Control-Allow-Headers', 'Content-Type,Authorization');
+  next();
+});
+
+// Body Parser
+app.use(bodyParser.urlencoded({ extended: false }));
+app.use(bodyParser.json());
 
 // Logging
 app.use(morgan('common'));
 
-// CORS
-app.use(function (req, res, next) {
-  res.header('Access-Control-Allow-Origin', '*');
-  res.header('Access-Control-Allow-Headers', 'Content-Type,Authorization');
-  res.header('Access-Control-Allow-Methods', 'GET,POST,PUT,PATCH,DELETE');
-  if (req.method === 'OPTIONS') {
-    return res.send(204);
-  }
-  next();
+// Static Files
+app.use(express.static('public'));
+
+app.get('/', (req, res) => {
+    res.sendFile(__dirname + '/public/login.html');
 });
 
+// Authentication strategies
 passport.use(localStrategy);
 passport.use(jwtStrategy);
 
-app.use('/api/users/', usersRouter);
-app.use('/api/auth/', authRouter);
-
-const jwtAuth = passport.authenticate('jwt', { session: false });
-
-// A protected endpoint which needs a valid JWT to access it
-app.get('/api/protected', jwtAuth, (req, res) => {
-  return res.json({
-    data: 'rosebud'
-  });
+// Routes
+app.use('/api', goalsRouter);
+app.use('/api', usersRouter);
+app.use('/api', authRouter);
+// if endpoint does not exist
+app.use('*', function (req, res) {
+    res.status(404).json({ message: 'Not Found' });
 });
 
-app.use('*', (req, res) => {
-  return res.status(404).json({ message: 'Not Found' });
-});
-
-// Referenced by both runServer and closeServer. closeServer
-// assumes runServer has run and set `server` to a server object
+// Run and close Server
 let server;
 
-function runServer(databaseUrl, port = PORT) {
+function runServer(databaseUrl = DATABASE_URL, port) {
 
-  return new Promise((resolve, reject) => {
+  return new Promise ((resolve, reject) => {
     mongoose.connect(databaseUrl, err => {
       if (err) {
         return reject(err);
       }
-      server = app.listen(port, () => {
+      server = app.listen(port = (process.env.PORT || 8080), () => {
         console.log(`Your app is listening on port ${port}`);
         resolve();
       })
-        .on('error', err => {
-          mongoose.disconnect();
-          reject(err);
-        });
+      .on('error', err => {
+        mongoose.disconnect();
+        reject(err);
+      });
     });
   });
 }
 
 function closeServer() {
   return mongoose.disconnect().then(() => {
-    return new Promise((resolve, reject) => {
-      console.log('Closing server');
+    return new Promise(function(resolve, reject) {
+      console.log(`Closing server`);
       server.close(err => {
-        if (err) {
+        if(err) {
           return reject(err);
         }
         resolve();
@@ -91,7 +91,7 @@ function closeServer() {
   });
 }
 
-if (require.main === module) {
+if(require.main === module) {
   runServer(DATABASE_URL).catch(err => console.error(err));
 }
 
