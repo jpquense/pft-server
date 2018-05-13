@@ -35,7 +35,7 @@ router.get('/goals/:id', jwtAuth, (req, res) => {
     });
 });
 // Create new goal
-router.post('/goals', jwtAuth, requiredFields('text', 'count', 'done'), (req, res) => {
+router.post('/goals', jwtAuth, requiredFields('text', 'count'), (req, res) => {
   Goal
     .create({
       text: req.body.text,
