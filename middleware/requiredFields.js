@@ -1,5 +1,6 @@
 module.exports = (...fields) => (req, res, next) => {
-  console.log(req.body.done)
+  console.log(req.body)
+
   console.log('requiredFields ran!');
   
     for (let i = 0; i < fields.length; i++) {
