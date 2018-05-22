@@ -62,7 +62,7 @@ router.delete('/goals/:id', jwtAuth, (req, res) => {
     .findByIdAndRemove(req.params.id)
     .then(goal => {
       console.log(`Deleted goal with id \`${req.params.id}\``);
-      res.status(204).json({ message: 'success' });
+      res.status(200).json({ message: 'success' });
     })
     .catch(err => {
       console.error(err);

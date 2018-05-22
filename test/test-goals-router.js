@@ -117,7 +117,7 @@ beforeEach(function() {
             .set('Authorization', `Bearer ${token}`)
         })
         .then(res => {
-          res.should.have.status(204);
+          res.should.have.status(200);
           return Goal.findById(deletedGoal);
         })
         .then(goal => {
