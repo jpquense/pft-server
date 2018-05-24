@@ -52,7 +52,7 @@ router.post('/goals', jwtAuth, requiredFields('text', 'count'), (req, res) => {
 // Change existing goal with _id
 router.put('/goals/:id', jwtAuth, (req, res) => {
   Goal
-  .findByIdAndUpdate(req.params.id, {$set: { text: `${req.body.text}`}})
+  .findByIdAndUpdate(req.params.id, {$set: { text: `${req.body.text}`}}, {new: true})
   .then(updatedGoal => res.json(updatedGoal))
     .catch(err => res.status(500).json({ message: 'Internal server error' }));
 });
